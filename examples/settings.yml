@@ -30,3 +30,6 @@ general:
   alarm_interval: 2
   light_level_low: 4.0
   black_screen_when_light_low: false
+mqtt:
+  enabled: true
+  frequency: 3600

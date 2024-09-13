@@ -178,11 +178,9 @@ class MainView(View):
 
     """
 
-    def __init__(self, image, channels=None, alarm=None, display=None):
+    def __init__(self, image, channels=None, alarm=None):
         self.channels = channels
         self.alarm = alarm
-        self.display = display
-        self._is_sleeping = False
 
         View.__init__(self, image)
 
@@ -242,15 +240,6 @@ class MainView(View):
 
         self.icon(icon_backdrop.rotate(180), (DISPLAY_WIDTH - 26, 0), COLOR_WHITE)
         self.icon(icon_settings, (DISPLAY_WIDTH - 19 - 3, 3), (55, 55, 55))
-
-    def button_y(self):
-        if self._is_sleeping:
-            self.display.wake()
-            self._is_sleeping = False
-        else:
-            self.display.sleep()
-            self._is_sleeping = True
-        return True
 
 
 class EditView(View):
@@ -1064,7 +1053,7 @@ Low Light Value {:.2f}
     viewcontroller = ViewController(
         [
             (
-                MainView(image, channels=channels, alarm=alarm, display=display),
+                MainView(image, channels=channels, alarm=alarm),
                 SettingsView(image, options=main_options),
             ),
             (
@@ -1095,13 +1084,13 @@ Low Light Value {:.2f}
 
         viewcontroller.update()
 
-        # if light_level_low and config.get_general().get("black_screen_when_light_low"):
-        #     display.sleep()
-        #     display.display(image_blank.convert("RGB"))
-        # else:
-        viewcontroller.render()
-        # display.wake()
-        display.display(image.convert("RGB"))
+        if light_level_low and config.get_general().get("black_screen_when_light_low"):
+            display.sleep()
+            display.display(image_blank.convert("RGB"))
+        else:
+            viewcontroller.render()
+            display.wake()
+            display.display(image.convert("RGB"))
 
         config.set_general(
             {

@@ -20,7 +20,7 @@ from grow import Piezo
 from grow.moisture import Moisture
 from grow.pump import Pump
 
-FPS = 1
+FPS = 10
 
 BUTTONS = [5, 6, 16, 24]
 LABELS = ["A", "B", "X", "Y"]
@@ -980,15 +980,16 @@ def main():
     config.load()
 
     # Set up MQTT client
-    mqtt = config.get("mqtt", {}).get("enabled", False)
+    mqtt = config.config.get("mqtt", {}).get("enabled", False)
     if mqtt:
-        counter = 0
-        freq = config.get("mqtt", {}).get("frequency", 3600)
+        counter = 1
+        freq = config.config.get("mqtt", {}).get("frequency", 3600)
         client = mqttc.Client(client_id=None, clean_session=True)
         client.on_connect = on_connect
         client.on_disconnect = on_disconnect
         client.username_pw_set(BROKER_USER, BROKER_PWD)
         client.connect(host=BROKER_HOST, port=BROKER_PORT)
+        client.loop_start()
 
     # Set up the ST7735 SPI Display
     display = ST7735.ST7735(port=0, cs=1, dc=9, backlight=12, rotation=270, spi_speed_hz=80000000)
@@ -1098,9 +1099,9 @@ Low Light Value {:.2f}
         #     display.sleep()
         #     display.display(image_blank.convert("RGB"))
         # else:
-        #     viewcontroller.render()
-        #     display.wake()
-        #     display.display(image.convert("RGB"))
+        viewcontroller.render()
+        # display.wake()
+        display.display(image.convert("RGB"))
 
         config.set_general(
             {
@@ -1118,12 +1119,12 @@ Low Light Value {:.2f}
                     key = f"saturation_{channel.channel}"
                     message[key] = channel.sensor.saturation
                 client.publish(topic=BROKER_TOPIC, payload=json.dumps(message), qos=1, retain=True)
-                counter = 0
+                print(message)
+                counter = 1
             else:
                 counter += 1
 
         time.sleep(1.0 / FPS)
-        counter += 1
 
 
 if __name__ == "__main__":

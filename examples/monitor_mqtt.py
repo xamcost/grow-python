@@ -20,7 +20,7 @@ from grow import Piezo
 from grow.moisture import Moisture
 from grow.pump import Pump
 
-FPS = 10
+FPS = 1
 
 BUTTONS = [5, 6, 16, 24]
 LABELS = ["A", "B", "X", "Y"]
@@ -971,7 +971,7 @@ def main():
     # Set up MQTT client
     mqtt = config.config.get("mqtt", {}).get("enabled", False)
     if mqtt:
-        counter = 1
+        counter = 0
         freq = config.config.get("mqtt", {}).get("frequency", 3600)
         client = mqttc.Client(client_id=None, clean_session=True)
         client.on_connect = on_connect
@@ -1078,7 +1078,8 @@ Low Light Value {:.2f}
             if channel.alarm:
                 alarm.trigger()
 
-        light_level_low = light.get_lux() < config.get_general().get("light_level_low")
+        light_level = light.get_lux()
+        light_level_low = light_level < config.get_general().get("light_level_low")
 
         alarm.update(light_level_low)
 

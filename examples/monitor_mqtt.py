@@ -35,14 +35,6 @@ COLOR_YELLOW = (254, 219, 82)
 COLOR_RED = (247, 0, 63)
 COLOR_BLACK = (0, 0, 0)
 
-# MQTT Broker parameters
-BROKER_HOST = os.getenv("BROKER_HOST")
-BROKER_PORT = int(os.getenv("BROKER_PORT"))
-BROKER_USER = os.getenv("BROKER_USER")
-BROKER_PWD = os.getenv("BROKER_PWD")
-# MQTT topic to publish to
-BROKER_TOPIC = os.getenv("BROKER_TOPIC")
-
 # Only the ALPHA channel is used from these images
 icon_drop = Image.open("icons/icon-drop.png").convert("RGBA")
 icon_nodrop = Image.open("icons/icon-nodrop.png").convert("RGBA")
@@ -969,15 +961,17 @@ def main():
     config.load()
 
     # Set up MQTT client
-    mqtt = config.config.get("mqtt", {}).get("enabled", False)
+    mq = config.config.get("mqtt", {})
+    mqtt = mq.get("enabled", False)
     if mqtt:
-        counter = 0
-        freq = config.config.get("mqtt", {}).get("frequency", 3600)
+        counter = 1
+        topic = mq.get("topic", "grow/plant-soil")
+        freq = mq.get("frequency", 1800)
         client = mqttc.Client(client_id=None, clean_session=True)
         client.on_connect = on_connect
         client.on_disconnect = on_disconnect
-        client.username_pw_set(BROKER_USER, BROKER_PWD)
-        client.connect(host=BROKER_HOST, port=BROKER_PORT)
+        client.username_pw_set(mq.get("user", "xam"), mq.get("password", ""))
+        client.connect(host=mq.get("host", "192.168.1.20"), port=mq.get("port", 1883))
         client.loop_start()
 
     # Set up the ST7735 SPI Display
@@ -1108,7 +1102,7 @@ Low Light Value {:.2f}
                 for channel in channels:
                     key = f"saturation_{channel.channel}"
                     message[key] = channel.sensor.saturation
-                client.publish(topic=BROKER_TOPIC, payload=json.dumps(message), qos=1, retain=True)
+                client.publish(topic=topic, payload=json.dumps(message), qos=1, retain=True)
                 print(message)
                 counter = 1
             else:

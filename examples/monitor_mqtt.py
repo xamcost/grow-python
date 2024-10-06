@@ -8,6 +8,8 @@ import sys
 import threading
 import time
 
+import adafruit_shtc3
+import board
 import ltr559
 import paho.mqtt.client as mqttc
 import RPi.GPIO as GPIO
@@ -960,6 +962,10 @@ def main():
     config = Config()
     config.load()
 
+    # Temp & humidity sensor
+    i2c = board.I2C()
+    shtc3 = adafruit_shtc3.SHTC3(i2c)
+
     # Set up MQTT client
     mq = config.config.get("mqtt", {})
     mqtt = mq.get("enabled", False)
@@ -1102,8 +1108,16 @@ Low Light Value {:.2f}
                 for channel in channels:
                     key = f"saturation_{channel.channel}"
                     message[key] = channel.sensor.saturation
-                client.publish(topic=topic, payload=json.dumps(message), qos=1, retain=True)
+                # client.publish(topic=topic, payload=json.dumps(message), qos=1, retain=True)
                 print(message)
+                temp_message = {"temperature": shtc3.temperature, "humidity": shtc3.relative_humidity}
+                client.publish(
+                    topic="living-room/shtc3",
+                    payload=json.dumps(temp_message),
+                    qos=1,
+                    retain=True
+                )
+                print(temp_message)
                 counter = 1
             else:
                 counter += 1
